@@ -1,0 +1,26 @@
+# git config for the keycard-git demo: credentials from Keycard.
+#
+# Use it in place of your global config, from this directory:
+#
+#   export ZONE=<zone-id>
+#   GIT_CONFIG_GLOBAL="$PWD/gitconfig" git clone git@github.com:<org>/<private-repo>.git
+#
+# Identical to ../without-keycard/gitconfig apart from the keycard-git helper.
+# The Keycard CLI reads the zone from $ZONE.
+
+[credential]
+	# Clear every helper configured before this file, such as osxkeychain in
+	# the system config.
+	helper =
+	# Fail instead of prompting for a username and password.
+	interactive = false
+
+# keycard-git answers for github.com.
+[credential "https://github.com"]
+	helper = "!keycard-git credential"
+
+# Send SSH remotes over HTTPS, so no SSH key is used and every operation goes
+# through keycard-git.
+[url "https://github.com/"]
+	insteadOf = git@github.com:
+	insteadOf = ssh://git@github.com/

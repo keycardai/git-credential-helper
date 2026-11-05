@@ -1,0 +1,20 @@
+# git config for the keycard-git demo: no credentials at all.
+#
+# Use it in place of your global config, from this directory:
+#
+#   GIT_CONFIG_GLOBAL="$PWD/gitconfig" git clone git@github.com:<org>/<private-repo>.git
+#
+# Cloning a private repository fails: there is no credential helper, no SSH
+# key, and git does not prompt.
+
+[credential]
+	# Clear every helper configured before this file, such as osxkeychain in
+	# the system config.
+	helper =
+	# Fail instead of prompting for a username and password.
+	interactive = false
+
+# Send SSH remotes over HTTPS, so no SSH key is used.
+[url "https://github.com/"]
+	insteadOf = git@github.com:
+	insteadOf = ssh://git@github.com/

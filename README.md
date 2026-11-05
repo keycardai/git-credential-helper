@@ -180,6 +180,11 @@ git only reads a config file from a directory when an `include` or `includeIf`
 points at it, so the trailing `/` on the `gitdir:` pattern matters: it covers
 every repository under that directory.
 
+### Demo
+
+[`examples/`](examples/) has two git configs, one without credentials and one
+with `keycard-git`, to show the same clone failing and then working.
+
 ### Flags
 
 `keycard-git credential [flags] <get|store|erase>`

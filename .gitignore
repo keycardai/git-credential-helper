@@ -2,3 +2,7 @@
 /dist/
 *.test
 *.out
+
+# The demo configs are tracked; anything cloned next to them is not.
+/examples/*/*
+!/examples/*/gitconfig
