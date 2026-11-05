@@ -2,11 +2,9 @@
 #
 # Use it in place of your global config, from this directory:
 #
-#   export ZONE=<zone-id>
 #   GIT_CONFIG_GLOBAL="$PWD/gitconfig" git clone "$(git remote get-url origin)" demo
 #
 # Identical to ../without-keycard/gitconfig apart from the keycard-git helper.
-# The Keycard CLI reads the zone from $ZONE.
 
 [credential]
 	# Clear every helper configured before this file, such as osxkeychain in
@@ -16,8 +14,11 @@
 	interactive = false
 
 # keycard-git answers for github.com.
+#
+# Replace the zone ID with your own Keycard zone's. The Keycard CLI has no
+# default zone, so keycard-git passes it explicitly.
 [credential "https://github.com"]
-	helper = "!keycard-git credential"
+	helper = "!keycard-git credential --zone skh42y2hkb19n1wp656zekyuxt"
 
 # Send SSH remotes over HTTPS, so no SSH key is used and every operation goes
 # through keycard-git.

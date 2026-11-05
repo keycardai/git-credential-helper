@@ -23,15 +23,13 @@ func TestExampleConfigs(t *testing.T) {
 	tests := map[string]struct {
 		config       string
 		wantPassword string
-		wantArgs     []string
 	}{
 		"without keycard has no credentials": {
 			config: "without-keycard",
 		},
-		"with keycard asks keycard-git": {
+		"with keycard asks keycard-git for its zone": {
 			config:       "with-keycard",
 			wantPassword: gitToken,
-			wantArgs:     []string{"credential", "read", "--", "https://api.github.com"},
 		},
 	}
 
@@ -51,13 +49,20 @@ func TestExampleConfigs(t *testing.T) {
 
 			out, err := env.git(t, strings.NewReader("protocol=https\nhost=github.com\n\n"), "credential", "fill")
 			r.NotContains(out, leakedPassword, "helpers configured before the example must be cleared")
-			r.Equal(tc.wantArgs, env.keycard.Args(t))
+			args := env.keycard.Args(t)
 			if tc.wantPassword == "" {
 				r.Error(err, out)
 				r.NotContains(out, "password=")
+				r.Nil(args, "keycard must not run")
 				return
 			}
 			r.NoError(err, out)
+			// The zone comes from the helper line, not $ZONE, which the test
+			// environment does not set. Its value is whatever the user put there.
+			r.Len(args, 6)
+			r.Equal([]string{"credential", "read", "--zone"}, args[:3])
+			r.NotEmpty(args[3])
+			r.Equal([]string{"--", "https://api.github.com"}, args[4:])
 			r.Contains(out, "username=x-access-token\n")
 			r.Contains(out, "password="+tc.wantPassword+"\n")
 		})
