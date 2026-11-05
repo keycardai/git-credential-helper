@@ -31,24 +31,43 @@ export ZONE=<zone-id>
 
 ## Run it
 
+`GIT_TRACE=1` makes git print every program it starts. The `grep` keeps the
+lines that matter: `git remote-https` shows git talking HTTPS rather than SSH,
+and `credential` shows which credential helper git asked.
+
 Without Keycard:
 
 ```sh
 cd examples/without-keycard
-GIT_CONFIG_GLOBAL="$PWD/gitconfig" git clone "$(git remote get-url origin)" demo
+GIT_TRACE=1 GIT_CONFIG_GLOBAL="$PWD/gitconfig" \
+  git clone "$(git remote get-url origin)" demo 2>&1 \
+  | grep -E "run_command: (git remote-https|'[^']*credential)|fatal"
 ```
 
 ```
-Cloning into 'demo'...
+… trace: run_command: git remote-https origin https://github.com/<org>/<repo>.git
 fatal: unable to get password from user
 ```
+
+No credential helper runs: git has nobody to ask, so it gives up.
 
 With Keycard:
 
 ```sh
 cd ../with-keycard
-GIT_CONFIG_GLOBAL="$PWD/gitconfig" git clone "$(git remote get-url origin)" demo
+GIT_TRACE=1 GIT_CONFIG_GLOBAL="$PWD/gitconfig" \
+  git clone "$(git remote get-url origin)" demo 2>&1 \
+  | grep -E "run_command: (git remote-https|'[^']*credential)|fatal"
 ```
+
+```
+… trace: run_command: git remote-https origin https://github.com/<org>/<repo>.git
+… trace: run_command: 'keycard-git credential get'
+… trace: run_command: 'keycard-git credential store'
+```
+
+git asks `keycard-git` for credentials (`get`), and tells it they worked
+(`store`), which `keycard-git` ignores: there is nothing to store.
 
 The token can push too. `--dry-run` checks access without writing anything:
 
@@ -71,9 +90,6 @@ GIT_CONFIG_GLOBAL="$PWD/../../without-keycard/gitconfig" git push --dry-run orig
 ```
 fatal: unable to get password from user
 ```
-
-To show that git went through `keycard-git`, and over HTTPS rather than SSH,
-add `GIT_TRACE=1` and look for `run_command: 'keycard-git credential get'`.
 
 ### Public repositories
 
