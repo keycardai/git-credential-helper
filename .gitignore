@@ -1,0 +1,4 @@
+/keycard-git
+/dist/
+*.test
+*.out
