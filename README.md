@@ -126,7 +126,7 @@ And a resource that uses it:
 - The [Keycard CLI](https://docs.keycard.ai/cli/)
 - `keycard-git`:
   ```sh
-  go install github.com/keycardai/keycard-git-helper/cmd/keycard-git@latest
+  go install github.com/keycardai/git-credential-helper/cmd/keycard-git@latest
   ```
   Make sure `$(go env GOPATH)/bin` is on your `PATH`.
 

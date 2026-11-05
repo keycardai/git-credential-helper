@@ -1,4 +1,4 @@
-module github.com/keycardai/keycard-git-helper
+module github.com/keycardai/git-credential-helper
 
 go 1.26.1
 
