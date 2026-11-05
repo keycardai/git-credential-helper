@@ -15,6 +15,11 @@ Out of scope: SSH (a key is not bound to the App, so the documented setup
 rewrites SSH remotes to HTTPS) and commit signing (the user's own key, for
 now).
 
+This is a preview: a prototype of a git credential helper planned for the
+Keycard CLI itself. Keep it small and easy to port. Prefer behaviour the CLI
+should own (sessions, zone resolution, redaction) staying in the CLI over
+reimplementing it here.
+
 ## Layout
 
 ```

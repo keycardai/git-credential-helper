@@ -1,5 +1,12 @@
 # keycard-git
 
+> [!WARNING]
+> **Preview.** `keycard-git` is a work in progress. Commands, flags and setup
+> may change without notice. It is a prototype of functionality planned for the
+> [Keycard CLI](https://docs.keycard.ai/cli/): once the CLI acts as a git
+> credential helper itself, use that instead, and this repository will point
+> there.
+
 Short-lived git credentials from [Keycard](https://keycard.ai), issued through
 your organization's GitHub App, instead of personal access tokens and SSH keys
 that live on laptops forever.
