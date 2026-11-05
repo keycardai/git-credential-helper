@@ -25,4 +25,4 @@ formatters:
   settings:
     goimports:
       local-prefixes:
-        - github.com/keycardai/keycard-git-helper
+        - github.com/keycardai/git-credential-helper

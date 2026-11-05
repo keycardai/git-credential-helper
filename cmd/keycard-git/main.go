@@ -16,8 +16,8 @@ import (
 	"runtime/debug"
 	"time"
 
-	"github.com/keycardai/keycard-git-helper/internal/gitcred"
-	"github.com/keycardai/keycard-git-helper/internal/keycard"
+	"github.com/keycardai/git-credential-helper/internal/gitcred"
+	"github.com/keycardai/git-credential-helper/internal/keycard"
 )
 
 // version is set at build time with -ldflags "-X main.version=...".

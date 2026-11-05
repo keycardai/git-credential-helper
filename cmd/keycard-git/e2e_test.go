@@ -16,7 +16,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/keycardai/keycard-git-helper/internal/fakekeycard"
+	"github.com/keycardai/git-credential-helper/internal/fakekeycard"
 )
 
 const (
