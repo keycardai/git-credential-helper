@@ -253,4 +253,6 @@ See [CONTRIBUTING.md](CONTRIBUTING.md). Report security issues as described in
 
 ## License
 
-[Apache License 2.0](LICENSE)
+Apache-2.0 — see [LICENSE](LICENSE) and, for the copyright notice,
+[NOTICE](NOTICE). The Keycard name and logo are trademarks;
+[TRADEMARKS.md](TRADEMARKS.md) states how they may be used.
