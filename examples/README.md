@@ -22,6 +22,13 @@ ignored; only the `gitconfig` files are tracked.
 Finish [Set up git](../README.md#set-up-git-everyone) up to and including
 `keycard auth resource`, with your GitHub App installed on this repository.
 
+Then tell the Keycard CLI which zone to use, in the shell you run the demo
+from. Without it, `keycard-git` fails with `zone is required`:
+
+```sh
+export ZONE=<zone-id>
+```
+
 ## Run it
 
 Without Keycard:
@@ -40,7 +47,6 @@ With Keycard:
 
 ```sh
 cd ../with-keycard
-export ZONE=<zone-id>
 GIT_CONFIG_GLOBAL="$PWD/gitconfig" git clone "$(git remote get-url origin)" demo
 ```
 
