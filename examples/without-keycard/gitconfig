@@ -2,10 +2,10 @@
 #
 # Use it in place of your global config, from this directory:
 #
-#   GIT_CONFIG_GLOBAL="$PWD/gitconfig" git clone git@github.com:<org>/<private-repo>.git
+#   GIT_CONFIG_GLOBAL="$PWD/gitconfig" git clone "$(git remote get-url origin)" demo
 #
-# Cloning a private repository fails: there is no credential helper, no SSH
-# key, and git does not prompt.
+# Cloning a private repository, or pushing to any repository, fails: there is
+# no credential helper, no SSH key, and git does not prompt.
 
 [credential]
 	# Clear every helper configured before this file, such as osxkeychain in

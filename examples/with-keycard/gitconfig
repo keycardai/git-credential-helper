@@ -3,7 +3,7 @@
 # Use it in place of your global config, from this directory:
 #
 #   export ZONE=<zone-id>
-#   GIT_CONFIG_GLOBAL="$PWD/gitconfig" git clone git@github.com:<org>/<private-repo>.git
+#   GIT_CONFIG_GLOBAL="$PWD/gitconfig" git clone "$(git remote get-url origin)" demo
 #
 # Identical to ../without-keycard/gitconfig apart from the keycard-git helper.
 # The Keycard CLI reads the zone from $ZONE.
