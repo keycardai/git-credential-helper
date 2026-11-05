@@ -4,6 +4,7 @@ import (
 	"crypto/subtle"
 	"encoding/pem"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/cgi"
 	"net/http/httptest"
@@ -184,19 +185,7 @@ func newGitEnv(t *testing.T, b fakekeycard.Behavior) gitEnv {
 		remote:   srv.URL + "/study-group.git",
 		bareRepo: filepath.Join(repos, "study-group.git"),
 		keycard:  fake,
-		// Never let a test reach the developer's git config or keychain.
-		environ: []string{
-			"PATH=" + binDir + string(os.PathListSeparator) + os.Getenv("PATH"),
-			"HOME=" + home,
-			"XDG_CONFIG_HOME=" + filepath.Join(home, ".config"),
-			"GIT_CONFIG_GLOBAL=" + globalConfig,
-			"GIT_CONFIG_NOSYSTEM=1",
-			"GIT_TERMINAL_PROMPT=0",
-			"GIT_ASKPASS=",
-			// A remote that escapes the https rewrite fails instead of dialing out.
-			"GIT_SSH_COMMAND=false",
-			"SSH_ASKPASS=",
-		},
+		environ:  isolatedEnviron(binDir, home, globalConfig, ""),
 	}
 
 	for _, args := range [][]string{
@@ -215,11 +204,40 @@ func newGitEnv(t *testing.T, b fakekeycard.Behavior) gitEnv {
 
 func (e gitEnv) git(t *testing.T, args ...string) (string, error) {
 	t.Helper()
+	return e.gitInput(t, nil, args...)
+}
+
+// gitInput runs git with stdin, for commands such as `git credential fill`.
+func (e gitEnv) gitInput(t *testing.T, stdin io.Reader, args ...string) (string, error) {
+	t.Helper()
 	cmd := exec.Command("git", args...)
 	cmd.Dir = e.work
 	cmd.Env = e.environ
+	cmd.Stdin = stdin
 	out, err := cmd.CombinedOutput()
 	return string(out), err
+}
+
+// isolatedEnviron is the environment of a git that never reaches the
+// developer's git config, keychain, SSH keys or terminal. globalConfig
+// replaces ~/.gitconfig; systemConfig replaces the system config, or is
+// skipped when empty.
+func isolatedEnviron(binDir, home, globalConfig, systemConfig string) []string {
+	environ := []string{
+		"PATH=" + binDir + string(os.PathListSeparator) + os.Getenv("PATH"),
+		"HOME=" + home,
+		"XDG_CONFIG_HOME=" + filepath.Join(home, ".config"),
+		"GIT_CONFIG_GLOBAL=" + globalConfig,
+		"GIT_TERMINAL_PROMPT=0",
+		"GIT_ASKPASS=",
+		"SSH_ASKPASS=",
+		// A remote that escapes the https rewrite fails instead of dialing out.
+		"GIT_SSH_COMMAND=false",
+	}
+	if systemConfig == "" {
+		return append(environ, "GIT_CONFIG_NOSYSTEM=1")
+	}
+	return append(environ, "GIT_CONFIG_SYSTEM="+systemConfig)
 }
 
 // gitServer serves the bare repositories under root over smart HTTP, and

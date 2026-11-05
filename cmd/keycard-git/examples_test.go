@@ -4,6 +4,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -21,15 +23,15 @@ const leakedPassword = "pierce-hawthorne-moist-towelette"
 // config, as examples/README.md does, without touching the network.
 func TestExampleConfigs(t *testing.T) {
 	tests := map[string]struct {
-		config       string
-		wantPassword string
+		config      string
+		wantKeycard bool
 	}{
 		"without keycard has no credentials": {
 			config: "without-keycard",
 		},
 		"with keycard asks keycard-git for its zone": {
-			config:       "with-keycard",
-			wantPassword: gitToken,
+			config:      "with-keycard",
+			wantKeycard: true,
 		},
 	}
 
@@ -42,39 +44,55 @@ func TestExampleConfigs(t *testing.T) {
 				"git@github.com:greendale/study-group.git",
 				"ssh://git@github.com/greendale/study-group.git",
 			} {
-				out, err := env.git(t, nil, "ls-remote", "--get-url", remote)
+				out, err := env.git(t, "ls-remote", "--get-url", remote)
 				r.NoError(err, out)
 				r.Equal("https://github.com/greendale/study-group.git", strings.TrimSpace(out), "ssh remotes go over https")
 			}
 
-			out, err := env.git(t, strings.NewReader("protocol=https\nhost=github.com\n\n"), "credential", "fill")
+			out, err := env.gitInput(t, strings.NewReader("protocol=https\nhost=github.com\n\n"), "credential", "fill")
 			r.NotContains(out, leakedPassword, "helpers configured before the example must be cleared")
 			args := env.keycard.Args(t)
-			if tc.wantPassword == "" {
+			if !tc.wantKeycard {
 				r.Error(err, out)
 				r.NotContains(out, "password=")
 				r.Nil(args, "keycard must not run")
+				// GIT_TERMINAL_PROMPT=0 in the test environment would stop a
+				// prompt too, with a different message. This one only appears
+				// when the config's credential.interactive = false did it.
+				if !gitAtLeast(t, 2, 46) {
+					t.Skip("credential.interactive needs git 2.46 or newer; this git ignores it and would prompt")
+				}
+				r.Contains(out, "unable to get password from user", "credential.interactive = false must stop git from prompting")
 				return
 			}
 			r.NoError(err, out)
+			r.Contains(out, "username=x-access-token\n")
+			r.Contains(out, "password="+gitToken+"\n")
 			// The zone comes from the helper line, not $ZONE, which the test
 			// environment does not set. Its value is whatever the user put there.
 			r.Len(args, 6)
 			r.Equal([]string{"credential", "read", "--zone"}, args[:3])
 			r.NotEmpty(args[3])
 			r.Equal([]string{"--", "https://api.github.com"}, args[4:])
-			r.Contains(out, "username=x-access-token\n")
-			r.Contains(out, "password="+tc.wantPassword+"\n")
 		})
 	}
 }
 
 func TestExampleClonesAreIgnored(t *testing.T) {
-	r := require.New(t)
-	root, err := filepath.Abs(filepath.Join("..", ".."))
-	r.NoError(err)
+	root := repoRoot(t)
 	if err := exec.Command("git", "-C", root, "rev-parse", "--is-inside-work-tree").Run(); err != nil {
 		t.Skip("not a git checkout")
+	}
+
+	// Only this repository's .gitignore counts, not the developer's global
+	// excludes or config.
+	home := t.TempDir()
+	environ := []string{
+		"PATH=" + os.Getenv("PATH"),
+		"HOME=" + home,
+		"XDG_CONFIG_HOME=" + filepath.Join(home, ".config"),
+		"GIT_CONFIG_GLOBAL=" + os.DevNull,
+		"GIT_CONFIG_NOSYSTEM=1",
 	}
 
 	tests := map[string]struct {
@@ -95,7 +113,9 @@ func TestExampleClonesAreIgnored(t *testing.T) {
 			r := require.New(t)
 			// Exit 0: ignored. Exit 1: not ignored. --no-index judges the path
 			// by .gitignore alone, whether or not it is tracked or exists.
-			err := exec.Command("git", "-C", root, "check-ignore", "--quiet", "--no-index", tc.path).Run()
+			cmd := exec.Command("git", "-C", root, "check-ignore", "--quiet", "--no-index", tc.path)
+			cmd.Env = environ
+			err := cmd.Run()
 			if tc.wantIgnored {
 				r.NoError(err)
 				return
@@ -107,13 +127,10 @@ func TestExampleClonesAreIgnored(t *testing.T) {
 	}
 }
 
-type exampleEnv struct {
-	dir     string
-	environ []string
-	keycard fakekeycard.Fake
-}
-
-func newExampleEnv(t *testing.T, config string) exampleEnv {
+// newExampleEnv runs git with examples/<config>/gitconfig as its global
+// config, a fake keycard on PATH, and a system config whose credential helper
+// would leak a password if the example did not clear it.
+func newExampleEnv(t *testing.T, config string) gitEnv {
 	t.Helper()
 	r := require.New(t)
 
@@ -121,8 +138,7 @@ func newExampleEnv(t *testing.T, config string) exampleEnv {
 		t.Skip("git is not installed")
 	}
 
-	globalConfig, err := filepath.Abs(filepath.Join("..", "..", "examples", config, "gitconfig"))
-	r.NoError(err)
+	globalConfig := filepath.Join(repoRoot(t), "examples", config, "gitconfig")
 	r.FileExists(globalConfig)
 
 	work := t.TempDir()
@@ -140,30 +156,29 @@ func newExampleEnv(t *testing.T, config string) exampleEnv {
 	systemHelper := "[credential]\n\thelper = \"!f() { echo username=pierce; echo password=" + leakedPassword + "; }; f\"\n"
 	r.NoError(os.WriteFile(systemConfig, []byte(systemHelper), 0o600))
 
-	return exampleEnv{
-		dir:     work,
+	return gitEnv{
+		work:    work,
 		keycard: fake,
-		environ: []string{
-			"PATH=" + binDir + string(os.PathListSeparator) + os.Getenv("PATH"),
-			"HOME=" + home,
-			"XDG_CONFIG_HOME=" + filepath.Join(home, ".config"),
-			"GIT_CONFIG_GLOBAL=" + globalConfig,
-			"GIT_CONFIG_SYSTEM=" + systemConfig,
-			"GIT_TERMINAL_PROMPT=0",
-			"GIT_ASKPASS=",
-			"SSH_ASKPASS=",
-		},
+		environ: isolatedEnviron(binDir, home, globalConfig, systemConfig),
 	}
 }
 
-func (e exampleEnv) git(t *testing.T, stdin *strings.Reader, args ...string) (string, error) {
+func repoRoot(t *testing.T) string {
 	t.Helper()
-	cmd := exec.Command("git", args...)
-	cmd.Dir = e.dir
-	cmd.Env = e.environ
-	if stdin != nil {
-		cmd.Stdin = stdin
-	}
-	out, err := cmd.CombinedOutput()
-	return string(out), err
+	root, err := filepath.Abs(filepath.Join("..", ".."))
+	require.NoError(t, err)
+	return root
+}
+
+// gitAtLeast reports whether the git on PATH is at least major.minor.
+func gitAtLeast(t *testing.T, major, minor int) bool {
+	t.Helper()
+	out, err := exec.Command("git", "version").Output()
+	require.NoError(t, err)
+
+	m := regexp.MustCompile(`(\d+)\.(\d+)`).FindStringSubmatch(string(out))
+	require.NotNil(t, m, "unrecognised git version %q", out)
+	gotMajor, _ := strconv.Atoi(m[1])
+	gotMinor, _ := strconv.Atoi(m[2])
+	return gotMajor > major || (gotMajor == major && gotMinor >= minor)
 }

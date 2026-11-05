@@ -15,8 +15,9 @@
 
 # keycard-git answers for github.com.
 #
-# Replace the zone ID with your own Keycard zone's. The Keycard CLI has no
-# default zone, so keycard-git passes it explicitly.
+# Replace the zone ID with your own Keycard zone's. Without --zone, the
+# Keycard CLI looks for $ZONE or a keycard.toml in the directory git runs in;
+# naming it here makes the demo work without either.
 [credential "https://github.com"]
 	helper = "!keycard-git credential --zone skh42y2hkb19n1wp656zekyuxt"
 

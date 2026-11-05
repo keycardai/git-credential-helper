@@ -190,7 +190,7 @@ every repository under that directory.
 ### Demo
 
 [`examples/`](examples/) has two git configs, one without credentials and one
-with `keycard-git`, to show the same clone failing and then working.
+with `keycard-git`, to show the same clone or push failing, then working.
 
 ### Flags
 

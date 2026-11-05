@@ -22,6 +22,11 @@ ignored; only the `gitconfig` files are tracked.
 Finish [Set up git](../README.md#set-up-git-everyone) up to and including
 `keycard auth resource`, with your GitHub App installed on this repository.
 
+You need git 2.46 or newer (`git --version`). The configs stop git from
+prompting with `credential.interactive`, which older git ignores: it would ask
+for a username instead of failing. The git that comes with Xcode is older;
+Homebrew's is new enough.
+
 Then replace the zone ID in [`with-keycard/gitconfig`](with-keycard/gitconfig)
 with your own zone's: the `--zone` on the `keycard-git` helper line.
 
@@ -29,7 +34,8 @@ with your own zone's: the `--zone` on the `keycard-git` helper line.
 
 `GIT_TRACE=1` makes git print every program it starts. The `grep` keeps the
 lines that matter: `git remote-https` shows git talking HTTPS rather than SSH,
-and `credential` shows which credential helper git asked.
+`credential` shows which credential helper git asked, and `keycard-git:` shows
+its error if it has one.
 
 Without Keycard:
 
@@ -37,7 +43,7 @@ Without Keycard:
 cd examples/without-keycard
 GIT_TRACE=1 GIT_CONFIG_GLOBAL="$PWD/gitconfig" \
   git clone "$(git remote get-url origin)" demo 2>&1 \
-  | grep -E "run_command: (git remote-https|'[^']*credential)|fatal"
+  | grep -E "run_command: (git remote-https|'[^']*credential)|keycard-git:|fatal"
 ```
 
 ```
@@ -53,7 +59,7 @@ With Keycard:
 cd ../with-keycard
 GIT_TRACE=1 GIT_CONFIG_GLOBAL="$PWD/gitconfig" \
   git clone "$(git remote get-url origin)" demo 2>&1 \
-  | grep -E "run_command: (git remote-https|'[^']*credential)|fatal"
+  | grep -E "run_command: (git remote-https|'[^']*credential)|keycard-git:|fatal"
 ```
 
 ```
@@ -64,6 +70,10 @@ GIT_TRACE=1 GIT_CONFIG_GLOBAL="$PWD/gitconfig" \
 
 git asks `keycard-git` for credentials (`get`), and tells it they worked
 (`store`), which `keycard-git` ignores: there is nothing to store.
+
+If it fails instead, the `keycard-git:` line says why: the zone ID was not
+replaced, you are not signed in, or the resource is not authorized. Run the
+command without the `grep` to see everything.
 
 The token can push too. `--dry-run` checks access without writing anything:
 
@@ -95,6 +105,9 @@ pushes above.
 
 ## Clean up
 
+From `examples/with-keycard/demo`, where the walkthrough ends:
+
 ```sh
-rm -rf examples/without-keycard/demo examples/with-keycard/demo
+cd ../..
+rm -rf without-keycard/demo with-keycard/demo
 ```
