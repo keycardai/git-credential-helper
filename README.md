@@ -66,8 +66,17 @@ Once per organization.
 
 ### 1. Create a Keycard zone
 
-Create a zone for git in the Keycard console, or use an existing one. Note its
-ID: the zone's URL is `https://<zone-id>.keycard.cloud`.
+Create a zone for git in [Keycard Console](https://console.keycard.ai), or use
+an existing one. The zone's **Settings → Connection** page lists the values the
+rest of this setup asks for:
+
+| Console field   | Used for                                         |
+| --------------- | ------------------------------------------------ |
+| Zone ID         | `--zone` in the commands below                   |
+| Organization ID | `--org` in `keycard auth signin`                 |
+| Redirect URL    | the GitHub App's callback URL, in the next step  |
+
+The zone's URL is `https://<zone-id>.keycard.cloud`.
 
 ### 2. Create the GitHub App
 
@@ -76,7 +85,7 @@ Apps → New GitHub App**:
 
 | Setting                                         | Value                                              |
 | ----------------------------------------------- | -------------------------------------------------- |
-| Callback URL                                    | `https://<zone-id>.keycard.cloud/oauth/2/redirect` |
+| Callback URL                                    | the zone's Redirect URL, `https://<zone-id>.keycard.cloud/oauth/2/redirect` |
 | Expire user authorization tokens                | on                                                 |
 | Request user authorization (OAuth) during installation | off                                         |
 | Enable Device Flow                              | off                                                |
@@ -101,22 +110,36 @@ installed on.
 
 ### 4. Connect the App to Keycard
 
-In the zone, add a provider for the App:
+In the zone, open **Providers** and click **Add Provider**:
 
-| Field                  | Value                                         |
-| ---------------------- | --------------------------------------------- |
-| Identifier             | `https://github.com`                          |
-| Client ID / secret     | from the GitHub App                           |
-| Authorization endpoint | `https://github.com/login/oauth/authorize`    |
-| Token endpoint         | `https://github.com/login/oauth/access_token` |
-| Scopes                 | none: a GitHub App's permissions replace them |
+| Field         | Value                                 |
+| ------------- | ------------------------------------- |
+| Name          | anything, for example `GitHub`        |
+| Issuer URL    | `https://github.com`                  |
+| Client ID     | the GitHub App's client ID            |
+| Client Secret | the GitHub App's client secret        |
 
-And a resource that uses it:
+GitHub publishes no OAuth discovery document, so open **Advanced options** and
+enter its endpoints:
 
-| Field      | Value                    |
-| ---------- | ------------------------ |
-| Identifier | `https://api.github.com` |
-| Provider   | the provider above       |
+| Field             | Value                                         |
+| ----------------- | --------------------------------------------- |
+| Authorization URL | `https://github.com/login/oauth/authorize`    |
+| Token URL         | `https://github.com/login/oauth/access_token` |
+
+Leave the other advanced options empty, **Additional Scopes** included: a
+GitHub App's permissions replace OAuth scopes. With **Identifier** empty, the
+provider's identifier is its Issuer URL, `https://github.com`.
+
+Then open **Resources**, click **Add Resource**, choose **Add Manually**, and
+create a resource that uses the provider:
+
+| Field               | Value                              |
+| ------------------- | ---------------------------------- |
+| Name                | anything, for example `GitHub API` |
+| Identifier          | `https://api.github.com`           |
+| MCP Server          | off                                |
+| Credential Provider | the provider above                 |
 
 ## Set up git (everyone)
 
@@ -236,7 +259,7 @@ planned.
 | `… requires authorization; run 'keycard auth resource …'` | You have not authorized the App yet, or the authorization was revoked | Run the command from the message |
 | `The provider returned an error. Try again.` during `keycard auth resource` | Keycard hides GitHub's error on purpose. The usual cause is a client secret in the Keycard provider that does not match the App (GitHub's `incorrect_client_credentials`) | Generate a new client secret in the App and update the provider |
 | `Repository not found` while the helper ran | The App is not installed on that repository, or you have no access to it | Install the App on the repository |
-| `Provider 'https://github.com' granted insufficient scopes` | The provider requests OAuth scopes. GitHub returns granted scopes comma-separated, so Keycard reads them as one | Request no scopes, or set the provider's scope separator to `,` |
+| `Provider 'https://github.com' granted insufficient scopes` | The provider requests OAuth scopes. GitHub returns granted scopes comma-separated, so Keycard reads them as one | Request no scopes, or set **Scope Separator** to `,` in the provider's **Advanced options** |
 | git prompts for a username | git never asked `keycard-git`: the remote is SSH, the helper is scoped to another URL, or an `includeIf` does not match | Run with `GIT_TRACE=1` and look for `run_command: 'keycard-git credential …'` |
 
 To see what git asks for and what comes back (this prints the token, so do not
