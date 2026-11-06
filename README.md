@@ -259,6 +259,7 @@ planned.
 | `… requires authorization; run 'keycard auth resource …'` | You have not authorized the App yet, or the authorization was revoked | Run the command from the message |
 | `The provider returned an error. Try again.` during `keycard auth resource` | Keycard hides GitHub's error on purpose. The usual cause is a client secret in the Keycard provider that does not match the App (GitHub's `incorrect_client_credentials`) | Generate a new client secret in the App and update the provider |
 | `Repository not found` while the helper ran | The App is not installed on that repository, or you have no access to it | Install the App on the repository |
+| `Write access to repository not granted` and a 403, even on a clone or `ls-remote` | The App is not installed on that repository | Install the App on the repository |
 | `Provider 'https://github.com' granted insufficient scopes` | The provider requests OAuth scopes. GitHub returns granted scopes comma-separated, so Keycard reads them as one | Request no scopes, or set **Scope Separator** to `,` in the provider's **Advanced options** |
 | git prompts for a username | git never asked `keycard-git`: the remote is SSH, the helper is scoped to another URL, or an `includeIf` does not match | Run with `GIT_TRACE=1` and look for `run_command: 'keycard-git credential …'` |
 

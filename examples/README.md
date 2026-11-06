@@ -24,8 +24,8 @@ Finish [Set up git](../README.md#set-up-git-everyone) up to and including
 
 You need git 2.46 or newer (`git --version`). The configs stop git from
 prompting with `credential.interactive`, which older git ignores: it would ask
-for a username instead of failing. The git that comes with Xcode is older;
-Homebrew's is new enough.
+for a username instead of failing. The git in older Xcode releases is too old;
+Apple Git-157 (git 2.54) works, and so does Homebrew's.
 
 Then replace the zone ID in [`with-keycard/gitconfig`](with-keycard/gitconfig)
 with your own zone's: the `--zone` on the `keycard-git` helper line.
