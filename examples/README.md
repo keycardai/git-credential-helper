@@ -22,10 +22,18 @@ ignored; only the `gitconfig` files are tracked.
 Finish [Set up git](../README.md#set-up-git-everyone) up to and including
 `keycard auth resource`, with your GitHub App installed on this repository.
 
-You need git 2.46 or newer (`git --version`). The configs stop git from
-prompting with `credential.interactive`, which older git ignores: it would ask
-for a username instead of failing. The git that comes with Xcode is older;
-Homebrew's is new enough.
+You need git 2.46 or newer. The configs stop git from prompting with
+`credential.interactive`, which older git ignores: it would ask for a username
+instead of failing. A supported Xcode git looks like this:
+
+```
+$ which git
+/usr/bin/git
+$ git version
+git version 2.54.0 (Apple Git-157)
+```
+
+Older Xcode releases ship a git below 2.46. Homebrew's git is new enough.
 
 Then replace the zone ID in [`with-keycard/gitconfig`](with-keycard/gitconfig)
 with your own zone's: the `--zone` on the `keycard-git` helper line.
