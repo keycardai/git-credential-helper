@@ -118,6 +118,37 @@ And a resource that uses it:
 | Identifier | `https://api.github.com` |
 | Provider   | the provider above       |
 
+### Using a GitHub OAuth App instead
+
+A GitHub OAuth App works in place of the GitHub App: every git operation
+behaves the same, and the git setup below is unchanged. Create it under
+**Settings → Developer settings → OAuth Apps** with the same callback URL. An
+OAuth App has no permission, installation, device flow or webhook settings.
+
+The Keycard provider and resource differ in two fields:
+
+| Field                      | GitHub App | OAuth App          |
+| -------------------------- | ---------- | ------------------ |
+| Provider: scope separator  | unset      | `,`                |
+| Resource: scopes           | none       | `repo`, `workflow` |
+
+The scopes replace the App's repository permissions: `repo` for clone, fetch
+and push, `workflow` for pushing changes to `.github/workflows/`.
+
+Optionally, add `offline_access` so Keycard renews the GitHub tokens it
+brokers without another consent. The scope opts the authorization into
+[expiring tokens](https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/authorizing-oauth-apps#expiring-access-tokens):
+GitHub returns an access token that expires after eight hours and a refresh
+token, and Keycard exchanges the refresh token for new access tokens as they
+expire.
+
+The trade-offs, against [Why a GitHub App](#why-a-github-app):
+
+- There is no installation boundary. The token can access every repository
+  the user can access.
+- An organization with OAuth App access restrictions refuses the token unless
+  the organization has approved the App.
+
 ## Set up git (everyone)
 
 ### Requirements
